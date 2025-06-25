@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Executive Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h1 { text-align: center; }
+        .summary { display: flex; justify-content: space-around; margin-bottom: 20px; }
+        .summary div { text-align: center; }
+        .progress-bar {
+            width: 100%;
+            background-color: #eee;
+            height: 20px;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .progress {
+            height: 100%;
+            background-color: #4caf50;
+            width: 0%;
+        }
+        .charts {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Executive Dashboard</h1>
+
+    <!-- Master Summary -->
+    <div class="summary">
+        <div>
+            <div id="total" class="value">0</div>
+            <div>Total Initiatives</div>
+        </div>
+        <div>
+            <div id="completed" class="value">0</div>
+            <div>Completed</div>
+        </div>
+        <div>
+            <div id="inProgress" class="value">0</div>
+            <div>In Progress</div>
+        </div>
+        <div>
+            <div id="blocked" class="value">0</div>
+            <div>Blocked</div>
+        </div>
+        <div>
+            <div id="delayed" class="value">0</div>
+            <div>Delayed</div>
+        </div>
+    </div>
+    <div class="progress-bar">
+        <div id="completionBar" class="progress"></div>
+    </div>
+
+    <div class="charts">
+        <canvas id="strategyPie"></canvas>
+        <canvas id="statusPie"></canvas>
+        <canvas id="trendLine"></canvas>
+    </div>
+
+    <script>
+        // Example data - this could be replaced by dynamic data
+        const initiatives = [
+            {strategy: 'growth', status: 'completed', month: 'Jan'},
+            {strategy: 'people', status: 'completed', month: 'Jan'},
+            {strategy: 'tech', status: 'in progress', month: 'Feb'},
+            {strategy: 'marketing', status: 'not started', month: 'Feb'},
+            {strategy: 'growth', status: 'completed', month: 'Mar'},
+            {strategy: 'tech', status: 'completed', month: 'Mar'},
+            {strategy: 'marketing', status: 'in progress', month: 'Apr'},
+            {strategy: 'people', status: 'not started', month: 'Apr'},
+            {strategy: 'growth', status: 'in progress', month: 'May'},
+            {strategy: 'tech', status: 'completed', month: 'May'},
+            {strategy: 'people', status: 'completed', month: 'Jun'},
+            {strategy: 'marketing', status: 'completed', month: 'Jun'}
+        ];
+
+        const statusColors = {
+            'completed': '#4caf50',
+            'in progress': '#2196f3',
+            'not started': '#f44336'
+        };
+
+        function updateSummary() {
+            const total = initiatives.length;
+            const completed = initiatives.filter(i => i.status === 'completed').length;
+            const inProgress = initiatives.filter(i => i.status === 'in progress').length;
+            const blocked = initiatives.filter(i => i.status === 'blocked').length;
+            const delayed = initiatives.filter(i => i.status === 'delayed').length;
+
+            document.getElementById('total').textContent = total;
+            document.getElementById('completed').textContent = completed;
+            document.getElementById('inProgress').textContent = inProgress;
+            document.getElementById('blocked').textContent = blocked;
+            document.getElementById('delayed').textContent = delayed;
+
+            const completionPercent = total ? Math.round(completed / total * 100) : 0;
+            document.getElementById('completionBar').style.width = completionPercent + '%';
+        }
+
+        function createStrategyPie() {
+            const strategies = ['growth', 'people', 'tech', 'marketing'];
+            const counts = strategies.map(s => initiatives.filter(i => i.strategy === s).length);
+            const completedCounts = strategies.map(s => initiatives.filter(i => i.strategy === s && i.status === 'completed').length);
+
+            const ctx = document.getElementById('strategyPie');
+            new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: strategies,
+                    datasets: [{
+                        data: counts,
+                        backgroundColor: ['#ff6384', '#36a2eb', '#ffcd56', '#4bc0c0']
+                    }]
+                },
+                options: {
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const index = context.dataIndex;
+                                    return `${strategies[index]}: ${counts[index]} total, ${completedCounts[index]} completed`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createStatusPie() {
+            const statuses = ['completed', 'in progress', 'not started'];
+            const counts = statuses.map(s => initiatives.filter(i => i.status === s).length);
+            const ctx = document.getElementById('statusPie');
+            new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: statuses,
+                    datasets: [{
+                        data: counts,
+                        backgroundColor: statuses.map(s => statusColors[s])
+                    }]
+                }
+            });
+        }
+
+        function createTrendLine() {
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+            const monthlyCompleted = months.map(m => initiatives.filter(i => i.month === m && i.status === 'completed').length);
+            const ctx = document.getElementById('trendLine');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: months,
+                    datasets: [{
+                        label: 'Completed Initiatives',
+                        data: monthlyCompleted,
+                        fill: false,
+                        borderColor: '#4caf50',
+                        tension: 0.1
+                    }]
+                }
+            });
+        }
+
+        updateSummary();
+        createStrategyPie();
+        createStatusPie();
+        createTrendLine();
+    </script>
+</body>
+</html>
